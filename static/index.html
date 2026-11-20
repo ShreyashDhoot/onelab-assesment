@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinRecon - Enterprise Payment Reconciliation Platform</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">FinRecon</h1>
+          <p class="brand-subtitle">Automated Payment Ledger & Bank Reconciliation Platform</p>
+        </div>
+      </div>
+      <div class="nav-badges">
+        <span class="badge badge-success">
+          <span class="pulse-dot"></span> Render Ready
+        </span>
+        <span class="badge badge-outline" id="periodBadge">Period: Nov 2026 Cutoff</span>
+      </div>
+    </header>
+
+    <!-- Upload & Actions Bar -->
+    <section class="action-card">
+      <div class="upload-grid">
+        <!-- Platform File Input -->
+        <div class="upload-box" id="platformDropZone">
+          <div class="upload-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div class="upload-text">
+            <label for="platformFileInput" class="upload-label">
+              <strong id="platformFileLabel">Upload Platform Transactions</strong>
+              <span>Select CSV or drag & drop</span>
+            </label>
+            <input type="file" id="platformFileInput" accept=".csv" class="file-input">
+          </div>
+        </div>
+
+        <!-- Bank File Input -->
+        <div class="upload-box" id="bankDropZone">
+          <div class="upload-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+              <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+          </div>
+          <div class="upload-text">
+            <label for="bankFileInput" class="upload-label">
+              <strong id="bankFileLabel">Upload Bank Statement</strong>
+              <span>Select CSV or drag & drop</span>
+            </label>
+            <input type="file" id="bankFileInput" accept=".csv" class="file-input">
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button id="btnLoadSample" class="btn btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            Load Sample Data
+          </button>
+          <button id="btnReconcile" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+            Reconcile Files
+          </button>
+          <button id="btnBenchmark" class="btn btn-benchmark">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
+            Ground Truth Benchmark
+          </button>
+          <button id="btnExport" class="btn btn-outline" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+      <div id="statusMessage" class="status-msg hidden"></div>
+    </section>
+
+    <!-- KPI Summary Cards -->
+    <section class="kpi-section">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Platform Total Effective</span>
+            <span class="kpi-badge kpi-badge-blue" id="kpiPlatformCount">0 rows</span>
+          </div>
+          <div class="kpi-value" id="kpiPlatformEff">₹0.00</div>
+          <div class="kpi-subtext" id="kpiPlatformGross">Gross: ₹0.00 (SUCCESS only)</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Bank Total Effective</span>
+            <span class="kpi-badge kpi-badge-blue" id="kpiBankCount">0 rows</span>
+          </div>
+          <div class="kpi-value" id="kpiBankEff">₹0.00</div>
+          <div class="kpi-subtext" id="kpiBankGross">Gross: ₹0.00 (Credit - Debit)</div>
+        </div>
+
+        <div class="kpi-card kpi-card-highlight">
+          <div class="kpi-header">
+            <span class="kpi-title">Final Discrepancy (P - B)</span>
+            <span class="kpi-badge kpi-badge-red" id="kpiGapStatus">Unbalanced</span>
+          </div>
+          <div class="kpi-value" id="kpiFinalGap">₹0.00</div>
+          <div class="kpi-subtext">True residual variance after all timing clears</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Month-End Cutoff Gap (30-Nov)</span>
+            <span class="kpi-badge kpi-badge-amber">Cut-off View</span>
+          </div>
+          <div class="kpi-value" id="kpiCutoffGap">₹0.00</div>
+          <div class="kpi-subtext" id="kpiTransitDelta">Transit in-flight: ₹0.00</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Clean Matches (1:1)</span>
+            <span class="kpi-badge kpi-badge-green">Verified</span>
+          </div>
+          <div class="kpi-value text-green" id="kpiCleanCount">0</div>
+          <div class="kpi-subtext" id="kpiCleanInr">Amount: ₹0.00</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <span class="kpi-title">Discrepancies Flagged</span>
+            <span class="kpi-badge kpi-badge-purple">Action Required</span>
+          </div>
+          <div class="kpi-value text-amber" id="kpiAnomalyCount">0</div>
+          <div class="kpi-subtext" id="kpiTotalGroups">Total Groups: 0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 Gap Types + Unmatched Breakdown Section -->
+    <section class="gap-types-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Reconciliation Gap Taxonomy: 4 Gap Types + Unmatched Totals</h2>
+          <p class="section-desc">Classified discrepancies and financial impact across accounting dimensions</p>
+        </div>
+      </div>
+
+      <div class="gap-grid">
+        <!-- 1. Timing -->
+        <div class="gap-card" data-gap-filter="TIMING">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-timing">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">1. Timing Differences</h3>
+              <span class="gap-badge" id="gapCountTiming">0 Groups</span>
+            </div>
+          </div>
+          <p class="gap-desc">Month-end cut-offs in transit, weekend settlement lag breaches, and prior-period spillovers.</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Final Gap:</span>
+              <strong class="metric-val" id="gapFinalTiming">₹0.00</strong>
+            </div>
+            <div>
+              <span class="metric-lbl">Cutoff Gap:</span>
+              <strong class="metric-val" id="gapCutoffTiming">₹0.00</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('TIMING')">Filter Timing Rows</button>
+        </div>
+
+        <!-- 2. Amount -->
+        <div class="gap-card" data-gap-filter="AMOUNT">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-amount">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">2. Amount Discrepancies</h3>
+              <span class="gap-badge" id="gapCountAmount">0 Groups</span>
+            </div>
+          </div>
+          <p class="gap-desc">Gateway MDR (2%) & GST deductions, partial settlements, penny rounding, and keying transpositions.</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Final Gap:</span>
+              <strong class="metric-val text-red" id="gapFinalAmount">₹0.00</strong>
+            </div>
+            <div>
+              <span class="metric-lbl">Platform:</span>
+              <strong class="metric-val" id="gapPlatAmount">₹0.00</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('AMOUNT')">Filter Amount Rows</button>
+        </div>
+
+        <!-- 3. Status -->
+        <div class="gap-card" data-gap-filter="STATUS">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-status">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">3. Status Conflicts</h3>
+              <span class="gap-badge" id="gapCountStatus">0 Groups</span>
+            </div>
+          </div>
+          <p class="gap-desc">State divergence: Platform Success vs Bank Failed/Reversed, or Platform Pending/Failed vs Bank Success.</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Final Gap:</span>
+              <strong class="metric-val text-red" id="gapFinalStatus">₹0.00</strong>
+            </div>
+            <div>
+              <span class="metric-lbl">Bank Total:</span>
+              <strong class="metric-val" id="gapBankStatus">₹0.00</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('STATUS')">Filter Status Rows</button>
+        </div>
+
+        <!-- 4. Operational / Structural -->
+        <div class="gap-card" data-gap-filter="OPERATIONAL">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-operational">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">4. Operational & Duplicates</h3>
+              <span class="gap-badge" id="gapCountOperational">0 Groups</span>
+            </div>
+          </div>
+          <p class="gap-desc">Webhook duplicates, duplicate bank postings, 1-to-many batches, orphan refunds, chargebacks, ref format.</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Final Gap:</span>
+              <strong class="metric-val" id="gapFinalOperational">₹0.00</strong>
+            </div>
+            <div>
+              <span class="metric-lbl">Groups:</span>
+              <strong class="metric-val" id="gapPlatOperational">0</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('OPERATIONAL')">Filter Operational Rows</button>
+        </div>
+
+        <!-- 5. Unmatched Platform -->
+        <div class="gap-card" data-gap-filter="UNMATCHED_PLATFORM">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-unmatched-p">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">Unmatched Platform</h3>
+              <span class="gap-badge" id="gapCountUnmatchedP">0 Rows</span>
+            </div>
+          </div>
+          <p class="gap-desc">Missing in Bank: Captured on platform but bank credit never arrived (open receivable claim).</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Shortfall (P > B):</span>
+              <strong class="metric-val text-amber" id="gapFinalUnmatchedP">₹0.00</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('UNMATCHED_PLATFORM')">Filter Unmatched Platform</button>
+        </div>
+
+        <!-- 6. Unmatched Bank -->
+        <div class="gap-card" data-gap-filter="UNMATCHED_BANK">
+          <div class="gap-card-header">
+            <div class="gap-icon gap-icon-unmatched-b">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="gap-title">Unmatched Bank</h3>
+              <span class="gap-badge" id="gapCountUnmatchedB">0 Rows</span>
+            </div>
+          </div>
+          <p class="gap-desc">Missing in Platform: Direct customer deposits or unidentified credits at the bank (suspense payable).</p>
+          <div class="gap-metrics">
+            <div>
+              <span class="metric-lbl">Surplus (B > P):</span>
+              <strong class="metric-val text-red" id="gapFinalUnmatchedB">₹0.00</strong>
+            </div>
+          </div>
+          <button class="gap-filter-btn" onclick="filterByGapType('UNMATCHED_BANK')">Filter Unmatched Bank</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filter & Search Toolbar -->
+    <section class="toolbar-section">
+      <div class="toolbar-controls">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search by Txn ID, Order ID, UTR, Amount, Narration...">
+        </div>
+
+        <div class="select-group">
+          <select id="gapTypeSelect">
+            <option value="ALL">All Gap Types</option>
+            <option value="TIMING">Timing Differences</option>
+            <option value="AMOUNT">Amount Discrepancies</option>
+            <option value="STATUS">Status Conflicts</option>
+            <option value="OPERATIONAL">Operational Anomalies</option>
+            <option value="UNMATCHED_PLATFORM">Unmatched Platform</option>
+            <option value="UNMATCHED_BANK">Unmatched Bank</option>
+            <option value="CLEAN">Clean Matches Only</option>
+          </select>
+
+          <select id="statusFilterSelect">
+            <option value="ALL">All Transactions</option>
+            <option value="ANOMALIES_ONLY">Anomalies Only</option>
+            <option value="CLEAN_ONLY">Clean Matches Only</option>
+          </select>
+
+          <select id="methodSelect">
+            <option value="ALL">All Payment Methods</option>
+            <option value="UPI">UPI</option>
+            <option value="CARD">CARD</option>
+            <option value="NETBANKING">NETBANKING</option>
+            <option value="WALLET">WALLET</option>
+          </select>
+
+          <button id="btnResetFilters" class="btn btn-sm btn-ghost">Reset Filters</button>
+        </div>
+      </div>
+
+      <div class="filter-chips" id="filterChips">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- Transactions Table -->
+    <section class="table-section">
+      <div class="table-header">
+        <div>
+          <h3 class="table-title">Reconciled Transaction Groups</h3>
+          <span class="table-subtitle" id="tableRecordCount">Showing 0 groups</span>
+        </div>
+        <div class="table-pagination" id="paginationControls">
+          <button id="btnPrevPage" class="btn btn-sm btn-outline" disabled>Previous</button>
+          <span id="pageInfo">Page 1 of 1</span>
+          <button id="btnNextPage" class="btn btn-sm btn-outline" disabled>Next</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table" id="reconTable">
+          <thead>
+            <tr>
+              <th>Group ID</th>
+              <th>Gap Category</th>
+              <th>Anomaly Type</th>
+              <th>Platform Ref</th>
+              <th>Order ID</th>
+              <th>Method</th>
+              <th>Platform (₹)</th>
+              <th>Bank Ref / UTR</th>
+              <th>Bank (₹)</th>
+              <th>Net Gap (₹)</th>
+              <th>Lag</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="12" class="empty-state">
+                No data loaded. Click <strong>"Load Sample Data"</strong> or upload your CSV files above to start reconciliation.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Detail Investigation Modal -->
+  <div class="modal-backdrop hidden" id="detailModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div>
+          <span class="badge badge-purple" id="modalGroupId">G0001</span>
+          <h3 class="modal-title" id="modalTitle">Group Details</h3>
+        </div>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Ground Truth Benchmark Modal -->
+  <div class="modal-backdrop hidden" id="benchmarkModal">
+    <div class="modal-container modal-wide">
+      <div class="modal-header">
+        <div>
+          <span class="badge badge-success">Answer Key Verification</span>
+          <h3 class="modal-title">Ground Truth Verification & Accuracy Benchmark</h3>
+        </div>
+        <button class="modal-close" onclick="closeBenchmarkModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="benchmarkModalBody">
+        <div class="benchmark-loading" id="benchmarkLoading">
+          <div class="spinner"></div>
+          <p>Running multi-dimensional evaluation against ground_truth.csv...</p>
+        </div>
+        <div class="benchmark-content hidden" id="benchmarkContent">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
